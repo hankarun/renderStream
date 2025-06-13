@@ -1,0 +1,24 @@
+# GitHub Copilot ignore file
+
+# Build directories
+build/
+Debug/
+Release/
+x64/
+
+# Dependencies (already has its own documentation)
+_deps/
+
+# IDE/Editor configuration files
+.vscode/
+.vs/
+*.suo
+*.user
+*.sln.docstates
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.vcxproj
+*.vcxproj.filters

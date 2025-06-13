@@ -1,0 +1,91 @@
+# GitHub Copilot Prompt Configuration
+
+## Project Context
+This is a C++ project using the raylib library, which is a simple and easy-to-use library for video game programming. The project structure follows CMake conventions.
+
+## Code Style Guidelines
+- Use consistent indentation (4 spaces)
+- Follow C++ best practices
+- Use descriptive variable and function names
+- Include comments for complex logic
+- Follow raylib's API conventions
+
+## Preferred Approaches
+- Use raylib's built-in functions when available
+- Prefer modern C++ features when appropriate
+- Use simple, readable code over complex one-liners
+- Structure game code with clear separation of concerns:
+  - Initialization
+  - Update
+  - Draw
+  - Deinitialization
+
+## Dependencies
+- raylib (main graphics and input library)
+- C++ Standard Library
+
+## Common Tasks
+- Creating and managing game windows
+- Handling input (keyboard, mouse, etc.)
+- Drawing shapes, textures, and text
+- Playing sounds and music
+- Implementing game logic and physics
+
+## Examples
+When suggesting code for common raylib tasks, follow these patterns:
+
+### Window Creation
+```cpp
+#include "raylib.h"
+
+int main() {
+    // Initialization
+    const int screenWidth = 800;
+    const int screenHeight = 450;
+    InitWindow(screenWidth, screenHeight, "Window Title");
+    SetTargetFPS(60);
+    
+    // Main game loop
+    while (!WindowShouldClose()) {
+        // Update
+        
+        // Draw
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        // Draw code here
+        EndDrawing();
+    }
+    
+    // De-Initialization
+    CloseWindow();
+    return 0;
+}
+```
+
+### Drawing Shapes
+```cpp
+// Draw a circle
+DrawCircle(centerX, centerY, radius, color);
+
+// Draw a rectangle
+DrawRectangle(posX, posY, width, height, color);
+
+// Draw a line
+DrawLine(startPosX, startPosY, endPosX, endPosY, color);
+```
+
+### Handling Input
+```cpp
+// Check if a key is pressed
+if (IsKeyPressed(KEY_SPACE)) {
+    // Do something
+}
+
+// Check if a key is down
+if (IsKeyDown(KEY_RIGHT)) {
+    // Do something repeatedly while key is down
+}
+
+// Check mouse position
+Vector2 mousePosition = GetMousePosition();
+```

@@ -1,0 +1,12 @@
+# GitHub Copilot Configuration
+
+# Project Information
+project_name: RaylibTest
+description: A project using the raylib library for graphics and game development
+language: C++
+library: raylib
+
+# Copilot Settings
+enable_suggestions: true
+enable_code_explanations: true
+enable_code_reviews: true
