@@ -46,7 +46,7 @@ void main()
         normalMapValue = normalMapValue * 2.0 - 1.0;
         
         // Adjust normal map strength (increase for more pronounced effect)
-        float normalStrength = 2.0;
+        float normalStrength = 1.0;
         normalMapValue.xy *= normalStrength;
         normalMapValue = normalize(normalMapValue);
         
@@ -74,6 +74,7 @@ void main()
     
     // Calculate diffuse component
     vec4 diffuse = texColor * diff;
+    diffuse.a = 1.0;
     
     // Calculate specular reflection (Phong)
     vec3 viewDir = normalize(viewPos - fragPosition);
@@ -97,16 +98,15 @@ void main()
         specular = mix(specular, vec4(0.0, 0.0, 0.0, 1.0), cloudColor.r);
     }
     
-    // Add emissive (night) component based on the reverse of the diffuse factor
-    float nightFactor = 1.0 - diff;
-    nightFactor = pow(nightFactor, 2.0); // Less sharp transition
-    vec4 emissive = nightColor * nightFactor * 1.0; // Increased intensity
-
-    // Calculate final color
+      // Calculate final color
     finalColor = ambient + diffuse + specular;
     
     // Add emission if available
     if (hasEmissionMap) {
+        // Add emissive (night) component based on the reverse of the diffuse factor
+        float nightFactor = 1.0 - diff;
+        nightFactor = pow(nightFactor, 2.0); // Less sharp transition
+        vec4 emissive = nightColor * nightFactor * 1.0; // Increased intensity
         finalColor += emissive;
     }
     

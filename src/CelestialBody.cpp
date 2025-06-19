@@ -228,11 +228,11 @@ void CelestialBody::UpdateShaderValues(const Camera3D& camera, const Vector3& li
     // Update light position
     SetShaderValue(shader, lightPosLoc, &lightPos, SHADER_UNIFORM_VEC3);
 
-    bool hasDiffuseMap = (diffuseTexture.id > 0);
-    bool hasNormalMap = (normalTexture.id > 0);
-    bool hasSpecularMap = (specularTexture.id > 0);
-    bool hasEmissionMap = (emissionTexture.id > 0);
-    bool hasCloudMap = (cloudTexture.id > 0);
+    int hasDiffuseMap = (diffuseTexture.id > 0);
+    int hasNormalMap = (normalTexture.id > 0);
+    int hasSpecularMap = (specularTexture.id > 0);
+    int hasEmissionMap = (emissionTexture.id > 0);
+    int hasCloudMap = (cloudTexture.id > 0);
 
     SetShaderValue(shader, hasDiffuseMapLoc, &hasDiffuseMap, SHADER_UNIFORM_INT);
     SetShaderValue(shader, hasNormalMapLoc, &hasNormalMap, SHADER_UNIFORM_INT);

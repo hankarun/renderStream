@@ -12,14 +12,14 @@ int main()
     
     // Define the camera
     Camera3D camera = { 0 };
-    camera.position = Vector3{ 3.0f, 1.0f, 3.0f };  // Camera position
+    camera.position = Vector3{ 0.0f, 1.0f, -3.0f };  // Camera position
     camera.target = Vector3{ 0.0f, 0.0f, 0.0f };    // Camera looking at point
     camera.up = Vector3{ 0.0f, 1.0f, 0.0f };        // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                            // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type
     
     // Define the light position (in world space)
-    Vector3 lightPos = { 5.0f, 3.0f, 0.0f };
+    Vector3 lightPos = { 5.0f, 0.0f, 0.0f };
     
     // Create Earth celestial body
     CelestialBody earth("Earth", 1.0f, 10.0f); // Name, radius, rotation speed
@@ -42,6 +42,7 @@ int main()
     moon.SetScale(0.27f); // Set moon scale to 27% of Earth's size
     moon.SetOrbit(&earth, 1.5f, 5.0f, 5.0f); // Parent, distance, speed, tilt
     
+
     SetTargetFPS(60);  // Set our game to run at 60 frames-per-second
     
     // Main game loop
