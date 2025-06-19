@@ -19,11 +19,13 @@ int main()
       // Load earth textures
     Texture2D earthTexture = LoadTexture("resources/images/2k_earth_daymap.png");
     Texture2D nightTexture = LoadTexture("resources/images/2k_earth_nightmap.png");
+    Texture2D specularTexture = LoadTexture("resources/images/2k_earth_specular_map.tif");
     
     // Load shader
     Shader shader = LoadShader("resources/shaders/basic.vs", "resources/shaders/basic.fs");
     // Get shader uniform locations
     int mvpLoc = GetShaderLocation(shader, "mvp");    
+    int modelLoc = GetShaderLocation(shader, "matModel"); // Add model matrix location
     int lightPosLoc = GetShaderLocation(shader, "lightPos");
     int diffuseColorLoc = GetShaderLocation(shader, "diffuseColor");
     int viewPosLoc = GetShaderLocation(shader, "viewPos");
@@ -42,35 +44,51 @@ int main()
       // Set the earth texture to the model
     shader.locs[MATERIAL_MAP_DIFFUSE] = GetShaderLocation(shader, "diffuseMap");
     shader.locs[MATERIAL_MAP_EMISSION] = GetShaderLocation(shader, "emissionMap");
+    shader.locs[MATERIAL_MAP_SPECULAR] = GetShaderLocation(shader, "specularMap");
     sphere.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = earthTexture;
     sphere.materials[0].maps[MATERIAL_MAP_EMISSION].texture = nightTexture;
-       
-    Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
+    sphere.materials[0].maps[MATERIAL_MAP_SPECULAR].texture = specularTexture;
+         Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
+    float rotationAngle = 0.0f; // Current rotation angle of the Earth
+    float rotationSpeed = 0.5f; // Rotation speed in degrees per frame
+    Vector3 rotationAxis = { 0.0f, 1.0f, 0.0f }; // Y-axis rotation for Earth
     
     SetTargetFPS(60);  // Set our game to run at 60 frames-per-second    // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update camera with orbital controls
-        UpdateCamera(&camera, CAMERA_ORBITAL);
+        //UpdateCamera(&camera, CAMERA_ORBITAL);
         
-        // Update camera position in shader for specular lighting
+        // Update rotation of the Earth
+        rotationAngle += rotationSpeed;
+        if (rotationAngle > 360.0f) rotationAngle -= 360.0f;        // Update camera position in shader for specular lighting
         SetShaderValue(shader, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
         
+        // Create rotation matrix for model
+        Matrix matRotation = MatrixRotate(rotationAxis, rotationAngle * DEG2RAD);
+        // Create translation matrix
+        Matrix matTranslation = MatrixTranslate(spherePosition.x, spherePosition.y, spherePosition.z);
+        // Create model matrix by combining rotation and translation
+        Matrix matModel = MatrixMultiply(matTranslation, matRotation);
+        
+        // Set model matrix uniform
+        SetShaderValueMatrix(shader, modelLoc, matModel);
+        
+        // Calculate and set MVP matrix
         Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
         Matrix matProjection = MatrixPerspective(camera.fovy*DEG2RAD, (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
-        Matrix mvp = MatrixMultiply(matView, matProjection);
-        SetShaderValueMatrix(shader, mvpLoc, mvp);
-        
-        // Draw
+        Matrix matViewProjection = MatrixMultiply(matView, matProjection);
+        Matrix mvp = MatrixMultiply(matModel, matViewProjection);
+        SetShaderValueMatrix(shader, mvpLoc, mvp);        // Draw
         BeginDrawing();
         
-            ClearBackground(BLACK);
-            
+            ClearBackground(BLACK);            
             BeginMode3D(camera);
-                DrawModel(sphere, spherePosition, 1.0f, WHITE);              
+                // Use the shader with our calculated matrices
+                // Draw the model at origin since our matrices already include the position
+                DrawModelEx(sphere, Vector3Zero(), rotationAxis, rotationAngle, Vector3One(), WHITE);
             EndMode3D();
             
-            DrawText("Use mouse and WASD keys to move camera", 10, 20, 20, BLACK);
             DrawFPS(10, 50);
         
         EndDrawing();
@@ -79,6 +97,7 @@ int main()
     UnloadModel(sphere);
     UnloadTexture(earthTexture);
     UnloadTexture(nightTexture);
+    UnloadTexture(specularTexture);
     CloseWindow();     // Close window and OpenGL context
     
     return 0;

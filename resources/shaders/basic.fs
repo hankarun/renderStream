@@ -15,6 +15,7 @@ uniform vec4 diffuseColor;
 uniform vec3 viewPos;  // Camera position for specular calculation
 uniform sampler2D diffuseMap;  // Earth day texture map
 uniform sampler2D emissionMap;  // Earth night texture map (emissive)
+uniform sampler2D specularMap;  // Earth specular map
 
 void main()
 {
@@ -41,16 +42,21 @@ void main()
     // Calculate specular reflection (Phong)
     vec3 viewDir = normalize(viewPos - fragPosition);
     vec3 reflectDir = reflect(-lightDir, normal);
-    
-    // Shininess factor (higher = smaller, sharper highlight)
+      // Shininess factor (higher = smaller, sharper highlight)
     float shininess = 32.0;
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    vec4 specular = vec4(0.5, 0.5, 0.5, 1.0) * spec;
-      // Output final color (ambient + diffuse + specular)
-    // Add emissive (night) component based on the reverse of the diffuse factor
+    
+    // Use the specular map to determine the specular intensity
+    vec4 specularMapColor = texture(specularMap, fragTexCoord);
+    // Use the grayscale value from the specular map to modulate the specular intensity
+    float specularIntensity = (specularMapColor.r + specularMapColor.g + specularMapColor.b) / 3.0;
+    vec4 specular = vec4(0.5, 0.5, 0.5, 1.0) * spec * specularIntensity;
+      // Output final color (ambient + diffuse + specular)    // Add emissive (night) component based on the reverse of the diffuse factor
     // This makes the night lights visible on the dark side of the earth
     float nightFactor = 1.0 - diff;
-    vec4 emissive = nightColor * nightFactor * 0.0; // Boost the night lights a bit
+    // Apply a stronger threshold to only show lights in very dark areas
+    nightFactor = pow(nightFactor, 4.0); // Make the transition sharper
+    vec4 emissive = nightColor * nightFactor * 0.0; // Reduced intensity
     
     finalColor = ambient + diffuse + specular + emissive;
 }
