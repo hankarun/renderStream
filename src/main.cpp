@@ -19,11 +19,11 @@ int main()
     
     // Load shader
     Shader shader = LoadShader("resources/shaders/basic.vs", "resources/shaders/basic.fs");
-    
-    // Get shader uniform locations
+      // Get shader uniform locations
     int mvpLoc = GetShaderLocation(shader, "mvp");
     int lightPosLoc = GetShaderLocation(shader, "lightPos");
     int diffuseColorLoc = GetShaderLocation(shader, "diffuseColor");
+    int viewPosLoc = GetShaderLocation(shader, "viewPos");
     
     // Define the light position (in world space)
     Vector3 lightPos = { 3.0f, 3.0f, 3.0f };
@@ -40,11 +40,13 @@ int main()
     Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
     
     SetTargetFPS(60);  // Set our game to run at 60 frames-per-second
-    
-    // Main game loop
+      // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         //UpdateCamera(&camera, CAMERA_ORBITAL);
+        
+        // Update camera position in shader for specular lighting
+        SetShaderValue(shader, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
         
         Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
         Matrix matProjection = MatrixPerspective(camera.fovy*DEG2RAD, (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
