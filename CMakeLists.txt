@@ -10,12 +10,14 @@ include(FetchContent)
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG 4.5.0  # Specify the version you want
+    GIT_TAG 5.5  # Specify the version you want
 )
 
 # Configure raylib build options
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
+set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
+set(SUPPORT_FILEFORMAT_HDR ON CACHE BOOL "Enable HDR support" FORCE)
 
 # Make the raylib library available
 FetchContent_MakeAvailable(raylib)
