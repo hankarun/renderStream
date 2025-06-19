@@ -21,7 +21,11 @@ set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(raylib)
 
 # Create executable
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} 
+    src/main.cpp
+    src/CelestialBody.cpp
+    src/CelestialBody.h
+)
 
 # Link with raylib
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
