@@ -8,8 +8,8 @@ in vec4 vertexColor;
 // Note: vertexTangent may not be available in Raylib's default sphere mesh
 
 // Input uniform values
-uniform mat4 mvp;
-uniform mat4 matModel;  // Model matrix for transforming vertices and normals
+uniform mat4 mvp2;
+uniform mat4 matModel2;  // Model matrix for transforming vertices and normals
 
 // Output vertex attributes (to fragment shader)
 out vec2 fragTexCoord;
@@ -21,10 +21,10 @@ out mat3 TBN;           // Tangent-Bitangent-Normal matrix for normal mapping
 void main()
 {
     // Transform vertex position and normal by model matrix
-    vec4 worldPosition = matModel * vec4(vertexPosition, 1.0);
+    vec4 worldPosition = matModel2 * vec4(vertexPosition, 1.0);
     
     // Normal matrix: transpose of the inverse of the upper-left 3x3 part of the model matrix
-    mat3 normalMatrix = transpose(inverse(mat3(matModel)));
+    mat3 normalMatrix = transpose(inverse(mat3(matModel2)));
     vec3 worldNormal = normalize(normalMatrix * vertexNormal);
     
     // Calculate tangent space for sphere
@@ -46,5 +46,5 @@ void main()
     fragNormal = worldNormal;
     
     // Calculate final vertex position
-    gl_Position = mvp * vec4(worldPosition.xyz, 1.0);
+    gl_Position = mvp2 * vec4(worldPosition.xyz, 1.0);
 }

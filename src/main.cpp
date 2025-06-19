@@ -32,8 +32,8 @@ int main()
     // Load shader
     Shader shader = LoadShader("resources/shaders/basic.vs", "resources/shaders/basic.fs");
     // Get shader uniform locations
-    int mvpLoc = GetShaderLocation(shader, "mvp");    
-    int modelLoc = GetShaderLocation(shader, "matModel"); // Add model matrix location
+    int mvpLoc = GetShaderLocation(shader, "mvp2");    
+    int modelLoc = GetShaderLocation(shader, "matModel2"); // Add model matrix location
     int lightPosLoc = GetShaderLocation(shader, "lightPos");
     int diffuseColorLoc = GetShaderLocation(shader, "diffuseColor");
     int viewPosLoc = GetShaderLocation(shader, "viewPos");
@@ -71,12 +71,9 @@ int main()
     
     SetTargetFPS(60);  // Set our game to run at 60 frames-per-second    // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update camera with orbital controls
-        UpdateCamera(&camera, CAMERA_ORBITAL);
-        
+    {        
         // Update rotation of the Earth
-        rotationAngle += rotationSpeed;
+        rotationAngle += rotationSpeed * GetFrameTime(); // Increment rotation angle based on frame time
         if (rotationAngle > 360.0f) rotationAngle -= 360.0f;        // Update camera position in shader for specular lighting
         SetShaderValue(shader, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
         
@@ -92,8 +89,8 @@ int main()
         
         // Calculate and set MVP matrix
         Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-        Matrix matProjection = MatrixPerspective(camera.fovy*DEG2RAD, (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);        Matrix matViewProjection = MatrixMultiply(matView, matProjection);
-        Matrix mvp = MatrixMultiply(matModel, matViewProjection);
+        Matrix matProjection = MatrixPerspective(camera.fovy*DEG2RAD, (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);       
+        Matrix mvp = MatrixMultiply(matView, matProjection);
         SetShaderValueMatrix(shader, mvpLoc, mvp);
         
         // Update cloud texture binding explicitly each frame to ensure it's correctly bound
