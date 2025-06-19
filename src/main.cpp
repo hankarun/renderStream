@@ -22,6 +22,13 @@ int main()
     Texture2D normalTexture = LoadTexture("resources/images/2k_earth_normal_map.png");
     Texture2D cloudTexture = LoadTexture("resources/images/2k_earth_clouds.png");
     
+    // Generate mipmaps for all textures to improve rendering quality at different distances
+    GenTextureMipmaps(&earthTexture);
+    GenTextureMipmaps(&nightTexture);
+    GenTextureMipmaps(&specularTexture);
+    GenTextureMipmaps(&normalTexture);
+    GenTextureMipmaps(&cloudTexture);
+    
     // Load shader
     Shader shader = LoadShader("resources/shaders/basic.vs", "resources/shaders/basic.fs");
     // Get shader uniform locations
