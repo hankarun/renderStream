@@ -23,12 +23,11 @@ uniform sampler2D cloudMap;    // Earth cloud map
 void main()
 {
     // Sample normal map (convert from RGB to normal vector)
-    vec3 normalMap = texture(normalMap, fragTexCoord).rgb;
-    // Transform from [0,1] range to [-1,1] range
+    vec3 normalMap = texture(normalMap, fragTexCoord).rgb;    // Transform from [0,1] range to [-1,1] range
     normalMap = normalMap * 2.0 - 1.0;
     
-    // Adjust normal map strength (reduce for less pronounced effect)
-    float normalStrength = 0.5;
+    // Adjust normal map strength (increase for more pronounced effect)
+    float normalStrength = 2.0;
     normalMap.xy *= normalStrength;
     normalMap = normalize(normalMap);
     

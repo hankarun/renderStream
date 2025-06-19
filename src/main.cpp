@@ -58,7 +58,7 @@ int main()
     
     Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
     float rotationAngle = 0.0f; // Current rotation angle of the Earth
-    float rotationSpeed = 0.5f; // Rotation speed in degrees per frame
+    float rotationSpeed = 0.8f; // Rotation speed in degrees per frame
     Vector3 rotationAxis = { 0.0f, 1.0f, 0.0f }; // Y-axis rotation for Earth
     
     SetTargetFPS(60);  // Set our game to run at 60 frames-per-second    // Main game loop
