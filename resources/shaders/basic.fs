@@ -66,7 +66,7 @@ void main()
     float nightFactor = 1.0 - diff;
     // Apply a stronger threshold to only show lights in very dark areas
     nightFactor = pow(nightFactor, 2.0); // Less sharp transition
-    vec4 emissive = nightColor * nightFactor * 0.1; // Increased intensity
+    vec4 emissive = nightColor * nightFactor * 1.0; // Increased intensity
     
     finalColor = ambient + diffuse + specular + emissive;
 }

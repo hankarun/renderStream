@@ -32,14 +32,13 @@ int main()
       // Define the light position (in world space) - moved to better illuminate the Earth
     Vector3 lightPos = { 5.0f, 3.0f, 5.0f };
     SetShaderValue(shader, lightPosLoc, &lightPos, SHADER_UNIFORM_VEC3);
-    
-    // Define diffuse color
+      // Define diffuse color
     Vector4 diffuseColor = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
     SetShaderValue(shader, diffuseColorLoc, &diffuseColor, SHADER_UNIFORM_VEC4);
     
-    // Create a model to render with the shader
-    Model sphere = LoadModelFromMesh(GenMeshSphere(1.0f, 32, 32));
-    sphere.materials[0].shader = shader;    // Set the earth texture to the model
+    // Load the 3D model from file
+    Model sphere = LoadModel("resources/model/sphere.glb");
+    sphere.materials[0].shader = shader;// Set the earth texture to the model
     shader.locs[SHADER_LOC_COLOR_DIFFUSE] = GetShaderLocation(shader, "diffuseMap");
     shader.locs[SHADER_LOC_MAP_EMISSION] = GetShaderLocation(shader, "emissionMap");
     shader.locs[SHADER_LOC_MAP_SPECULAR] = GetShaderLocation(shader, "specularMap");
@@ -57,7 +56,7 @@ int main()
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update camera with orbital controls
-        //UpdateCamera(&camera, CAMERA_ORBITAL);
+        UpdateCamera(&camera, CAMERA_ORBITAL);
         
         // Update rotation of the Earth
         rotationAngle += rotationSpeed;
