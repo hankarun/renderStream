@@ -15,11 +15,11 @@ int main()
     camera.target = Vector3{ 0.0f, 0.0f, 0.0f };    // Camera looking at point
     camera.up = Vector3{ 0.0f, 1.0f, 0.0f };        // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                            // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type
-      // Load earth textures
+    camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type      // Load earth textures
     Texture2D earthTexture = LoadTexture("resources/images/2k_earth_daymap.png");
     Texture2D nightTexture = LoadTexture("resources/images/2k_earth_nightmap.png");
-    Texture2D specularTexture = LoadTexture("resources/images/2k_earth_specular_map.tif");
+    Texture2D specularTexture = LoadTexture("resources/images/2k_earth_specular_map.png");
+    Texture2D normalTexture = LoadTexture("resources/images/2k_earth_normal_map.png");
     
     // Load shader
     Shader shader = LoadShader("resources/shaders/basic.vs", "resources/shaders/basic.fs");
@@ -29,9 +29,8 @@ int main()
     int lightPosLoc = GetShaderLocation(shader, "lightPos");
     int diffuseColorLoc = GetShaderLocation(shader, "diffuseColor");
     int viewPosLoc = GetShaderLocation(shader, "viewPos");
-    
-    // Define the light position (in world space)
-    Vector3 lightPos = { 3.0f, 3.0f, 3.0f };
+      // Define the light position (in world space) - moved to better illuminate the Earth
+    Vector3 lightPos = { 5.0f, 3.0f, 5.0f };
     SetShaderValue(shader, lightPosLoc, &lightPos, SHADER_UNIFORM_VEC3);
     
     // Define diffuse color
@@ -40,14 +39,15 @@ int main()
     
     // Create a model to render with the shader
     Model sphere = LoadModelFromMesh(GenMeshSphere(1.0f, 32, 32));
-    sphere.materials[0].shader = shader;
-      // Set the earth texture to the model
-    shader.locs[MATERIAL_MAP_DIFFUSE] = GetShaderLocation(shader, "diffuseMap");
-    shader.locs[MATERIAL_MAP_EMISSION] = GetShaderLocation(shader, "emissionMap");
-    shader.locs[MATERIAL_MAP_SPECULAR] = GetShaderLocation(shader, "specularMap");
+    sphere.materials[0].shader = shader;    // Set the earth texture to the model
+    shader.locs[SHADER_LOC_COLOR_DIFFUSE] = GetShaderLocation(shader, "diffuseMap");
+    shader.locs[SHADER_LOC_MAP_EMISSION] = GetShaderLocation(shader, "emissionMap");
+    shader.locs[SHADER_LOC_MAP_SPECULAR] = GetShaderLocation(shader, "specularMap");
+    shader.locs[SHADER_LOC_MAP_NORMAL] = GetShaderLocation(shader, "normalMap");
     sphere.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = earthTexture;
     sphere.materials[0].maps[MATERIAL_MAP_EMISSION].texture = nightTexture;
     sphere.materials[0].maps[MATERIAL_MAP_SPECULAR].texture = specularTexture;
+    sphere.materials[0].maps[MATERIAL_MAP_NORMAL].texture = normalTexture;
          Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
     float rotationAngle = 0.0f; // Current rotation angle of the Earth
     float rotationSpeed = 0.5f; // Rotation speed in degrees per frame
@@ -98,6 +98,7 @@ int main()
     UnloadTexture(earthTexture);
     UnloadTexture(nightTexture);
     UnloadTexture(specularTexture);
+    UnloadTexture(normalTexture);
     CloseWindow();     // Close window and OpenGL context
     
     return 0;
