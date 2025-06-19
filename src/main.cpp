@@ -16,11 +16,14 @@ int main()
     camera.up = Vector3{ 0.0f, 1.0f, 0.0f };        // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                            // Camera field-of-view Y
     camera.projection = CAMERA_PERSPECTIVE;         // Camera projection type
+      // Load earth textures
+    Texture2D earthTexture = LoadTexture("resources/images/2k_earth_daymap.png");
+    Texture2D nightTexture = LoadTexture("resources/images/2k_earth_nightmap.png");
     
     // Load shader
     Shader shader = LoadShader("resources/shaders/basic.vs", "resources/shaders/basic.fs");
-      // Get shader uniform locations
-    int mvpLoc = GetShaderLocation(shader, "mvp");
+    // Get shader uniform locations
+    int mvpLoc = GetShaderLocation(shader, "mvp");    
     int lightPosLoc = GetShaderLocation(shader, "lightPos");
     int diffuseColorLoc = GetShaderLocation(shader, "diffuseColor");
     int viewPosLoc = GetShaderLocation(shader, "viewPos");
@@ -36,14 +39,19 @@ int main()
     // Create a model to render with the shader
     Model sphere = LoadModelFromMesh(GenMeshSphere(1.0f, 32, 32));
     sphere.materials[0].shader = shader;
-    
+      // Set the earth texture to the model
+    shader.locs[MATERIAL_MAP_DIFFUSE] = GetShaderLocation(shader, "diffuseMap");
+    shader.locs[MATERIAL_MAP_EMISSION] = GetShaderLocation(shader, "emissionMap");
+    sphere.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = earthTexture;
+    sphere.materials[0].maps[MATERIAL_MAP_EMISSION].texture = nightTexture;
+       
     Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
     
-    SetTargetFPS(60);  // Set our game to run at 60 frames-per-second
-      // Main game loop
+    SetTargetFPS(60);  // Set our game to run at 60 frames-per-second    // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        //UpdateCamera(&camera, CAMERA_ORBITAL);
+        // Update camera with orbital controls
+        UpdateCamera(&camera, CAMERA_ORBITAL);
         
         // Update camera position in shader for specular lighting
         SetShaderValue(shader, viewPosLoc, &camera.position, SHADER_UNIFORM_VEC3);
@@ -56,7 +64,7 @@ int main()
         // Draw
         BeginDrawing();
         
-            ClearBackground(RAYWHITE);
+            ClearBackground(BLACK);
             
             BeginMode3D(camera);
                 DrawModel(sphere, spherePosition, 1.0f, WHITE);              
@@ -66,11 +74,11 @@ int main()
             DrawFPS(10, 50);
         
         EndDrawing();
-    }
-    
-    // De-Initialization
+    }    // De-Initialization
     UnloadShader(shader);
     UnloadModel(sphere);
+    UnloadTexture(earthTexture);
+    UnloadTexture(nightTexture);
     CloseWindow();     // Close window and OpenGL context
     
     return 0;

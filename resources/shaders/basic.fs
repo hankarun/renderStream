@@ -13,6 +13,8 @@ out vec4 finalColor;
 uniform vec3 lightPos;
 uniform vec4 diffuseColor;
 uniform vec3 viewPos;  // Camera position for specular calculation
+uniform sampler2D diffuseMap;  // Earth day texture map
+uniform sampler2D emissionMap;  // Earth night texture map (emissive)
 
 void main()
 {
@@ -24,12 +26,17 @@ void main()
     
     // Calculate diffuse reflection (Lambert)
     float diff = max(dot(normal, lightDir), 0.0);
+      // Sample texture color
+    vec4 texColor = texture(diffuseMap, fragTexCoord);
+    
+    // Sample night texture (emissive)
+    vec4 nightColor = texture(emissionMap, fragTexCoord);
     
     // Calculate ambient reflection
-    vec4 ambient = vec4(0.1, 0.1, 0.1, 1.0) * diffuseColor;
+    vec4 ambient = vec4(0.1, 0.1, 0.1, 1.0) * texColor;
     
     // Calculate diffuse component
-    vec4 diffuse = diffuseColor * diff;
+    vec4 diffuse = texColor * diff;
     
     // Calculate specular reflection (Phong)
     vec3 viewDir = normalize(viewPos - fragPosition);
@@ -39,7 +46,11 @@ void main()
     float shininess = 32.0;
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     vec4 specular = vec4(0.5, 0.5, 0.5, 1.0) * spec;
+      // Output final color (ambient + diffuse + specular)
+    // Add emissive (night) component based on the reverse of the diffuse factor
+    // This makes the night lights visible on the dark side of the earth
+    float nightFactor = 1.0 - diff;
+    vec4 emissive = nightColor * nightFactor * 0.0; // Boost the night lights a bit
     
-    // Output final color (ambient + diffuse + specular)
-    finalColor = ambient + diffuse + specular;
+    finalColor = ambient + diffuse + specular + emissive;
 }
