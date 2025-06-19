@@ -50,7 +50,8 @@ int main()
     
     sphere.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = earthTexture;
     sphere.materials[0].maps[MATERIAL_MAP_EMISSION].texture = nightTexture;
-    sphere.materials[0].maps[MATERIAL_MAP_SPECULAR].texture = specularTexture;    sphere.materials[0].maps[MATERIAL_MAP_NORMAL].texture = normalTexture;
+    sphere.materials[0].maps[MATERIAL_MAP_SPECULAR].texture = specularTexture;   
+    sphere.materials[0].maps[MATERIAL_MAP_NORMAL].texture = normalTexture;
     
     // Create a custom material map slot for clouds
     // Using index 10 which is beyond the standard material map indices
