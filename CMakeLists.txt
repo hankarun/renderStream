@@ -20,12 +20,21 @@ set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
 # Make the raylib library available
 FetchContent_MakeAvailable(raylib)
 
+
+set(SHADER_FILES
+    resources/shaders/basic.fs
+    resources/shaders/basic.vs
+)
+
 # Create executable
 add_executable(${PROJECT_NAME} 
     src/main.cpp
     src/CelestialBody.cpp
     src/CelestialBody.h
+    ${SHADER_FILES}
 )
+
+set_source_files_properties(${SHADER_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 # Link with raylib
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)

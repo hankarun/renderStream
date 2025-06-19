@@ -76,6 +76,14 @@ private:
     int viewPosLoc;
     int cloudMapLoc;
     
+
+    int hasDiffuseMapLoc;
+    int hasNormalMapLoc;
+    int hasSpecularMapLoc;
+    int hasEmissionMapLoc;
+    int hasCloudMapLoc;
+
+
     // Helper methods
     void UnloadTextures();
     void SetupShaderLocations();
