@@ -45,7 +45,7 @@ void main()
     
     // Blend earth and clouds based on cloud texture brightness
     // Since clouds are white (or grayscale), we can use the red channel as the cloud density
-    float cloudDensity = cloudColor.r * 0.5; // Adjust cloud intensity to 50% opacity
+    float cloudDensity = cloudColor.r * 0.8; // Adjust cloud intensity to 50% opacity
     
     // Blend the earth texture with white clouds
     texColor = mix(texColor, vec4(1.0, 1.0, 1.0, 1.0), cloudDensity);
@@ -69,7 +69,9 @@ void main()
     vec4 specularMapColor = texture(specularMap, fragTexCoord);
     // Use the grayscale value from the specular map to modulate the specular intensity
     float specularIntensity = (specularMapColor.r + specularMapColor.g + specularMapColor.b) / 3.0;
-    vec4 specular = vec4(0.5, 0.5, 0.5, 1.0) * spec * specularIntensity;      // Output final color (ambient + diffuse + specular)    // Add emissive (night) component based on the reverse of the diffuse factor
+    vec4 specular = vec4(0.5, 0.5, 0.5, 1.0) * spec * specularIntensity;      
+    // Output final color (ambient + diffuse + specular)    
+    // Add emissive (night) component based on the reverse of the diffuse factor
     // This makes the night lights visible on the dark side of the earth
     float nightFactor = 1.0 - diff;
     // Apply a stronger threshold to only show lights in very dark areas
