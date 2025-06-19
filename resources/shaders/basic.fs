@@ -18,6 +18,7 @@ uniform sampler2D diffuseMap;  // Earth day texture map
 uniform sampler2D emissionMap;  // Earth night texture map (emissive)
 uniform sampler2D specularMap;  // Earth specular map
 uniform sampler2D normalMap;   // Earth normal map
+uniform sampler2D cloudMap;    // Earth cloud map
 
 void main()
 {
@@ -35,12 +36,19 @@ void main()
     vec3 normal = normalize(TBN * normalMap);
     
     // Calculate the light direction and distance
-    vec3 lightDir = normalize(lightPos - fragPosition);
-    
-    // Calculate diffuse reflection (Lambert) with a minimum ambient value
+    vec3 lightDir = normalize(lightPos - fragPosition);    // Calculate diffuse reflection (Lambert) with a minimum ambient value
     float diff = max(dot(normal, lightDir), 0.0);
       // Sample texture color
     vec4 texColor = texture(diffuseMap, fragTexCoord);
+      // Sample cloud texture
+    vec4 cloudColor = texture(cloudMap, fragTexCoord);
+    
+    // Blend earth and clouds based on cloud texture brightness
+    // Since clouds are white (or grayscale), we can use the red channel as the cloud density
+    float cloudDensity = cloudColor.r * 0.5; // Adjust cloud intensity to 50% opacity
+    
+    // Blend the earth texture with white clouds
+    texColor = mix(texColor, vec4(1.0, 1.0, 1.0, 1.0), cloudDensity);
     
     // Sample night texture (emissive)
     vec4 nightColor = texture(emissionMap, fragTexCoord);

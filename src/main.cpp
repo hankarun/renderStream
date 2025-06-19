@@ -20,6 +20,7 @@ int main()
     Texture2D nightTexture = LoadTexture("resources/images/2k_earth_nightmap.png");
     Texture2D specularTexture = LoadTexture("resources/images/2k_earth_specular_map.png");
     Texture2D normalTexture = LoadTexture("resources/images/2k_earth_normal_map.png");
+    Texture2D cloudTexture = LoadTexture("resources/images/2k_earth_clouds.png");
     
     // Load shader
     Shader shader = LoadShader("resources/shaders/basic.vs", "resources/shaders/basic.fs");
@@ -29,25 +30,33 @@ int main()
     int lightPosLoc = GetShaderLocation(shader, "lightPos");
     int diffuseColorLoc = GetShaderLocation(shader, "diffuseColor");
     int viewPosLoc = GetShaderLocation(shader, "viewPos");
+    int cloudMapLoc = GetShaderLocation(shader, "cloudMap");
       // Define the light position (in world space) - moved to better illuminate the Earth
     Vector3 lightPos = { 5.0f, 3.0f, 5.0f };
     SetShaderValue(shader, lightPosLoc, &lightPos, SHADER_UNIFORM_VEC3);
       // Define diffuse color
     Vector4 diffuseColor = { 1.0f, 0.0f, 0.0f, 1.0f };  // Red color
     SetShaderValue(shader, diffuseColorLoc, &diffuseColor, SHADER_UNIFORM_VEC4);
-    
-    // Load the 3D model from file
+      // Load the 3D model from file
     Model sphere = LoadModel("resources/model/sphere.glb");
     sphere.materials[0].shader = shader;// Set the earth texture to the model
     shader.locs[SHADER_LOC_COLOR_DIFFUSE] = GetShaderLocation(shader, "diffuseMap");
     shader.locs[SHADER_LOC_MAP_EMISSION] = GetShaderLocation(shader, "emissionMap");
     shader.locs[SHADER_LOC_MAP_SPECULAR] = GetShaderLocation(shader, "specularMap");
     shader.locs[SHADER_LOC_MAP_NORMAL] = GetShaderLocation(shader, "normalMap");
+    
+    // Set cloud map texture location explicitly (it might not be automatically recognized)
+    shader.locs[SHADER_LOC_MAP_DIFFUSE + 10] = cloudMapLoc; // Using a custom slot that doesn't conflict
+    
     sphere.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = earthTexture;
     sphere.materials[0].maps[MATERIAL_MAP_EMISSION].texture = nightTexture;
-    sphere.materials[0].maps[MATERIAL_MAP_SPECULAR].texture = specularTexture;
-    sphere.materials[0].maps[MATERIAL_MAP_NORMAL].texture = normalTexture;
-         Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
+    sphere.materials[0].maps[MATERIAL_MAP_SPECULAR].texture = specularTexture;    sphere.materials[0].maps[MATERIAL_MAP_NORMAL].texture = normalTexture;
+    
+    // Create a custom material map slot for clouds
+    // Using index 10 which is beyond the standard material map indices
+    sphere.materials[0].maps[10].texture = cloudTexture;
+    
+    Vector3 spherePosition = { 0.0f, 0.0f, 0.0f }; // Position of the sphere
     float rotationAngle = 0.0f; // Current rotation angle of the Earth
     float rotationSpeed = 0.5f; // Rotation speed in degrees per frame
     Vector3 rotationAxis = { 0.0f, 1.0f, 0.0f }; // Y-axis rotation for Earth
@@ -75,10 +84,14 @@ int main()
         
         // Calculate and set MVP matrix
         Matrix matView = MatrixLookAt(camera.position, camera.target, camera.up);
-        Matrix matProjection = MatrixPerspective(camera.fovy*DEG2RAD, (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);
-        Matrix matViewProjection = MatrixMultiply(matView, matProjection);
+        Matrix matProjection = MatrixPerspective(camera.fovy*DEG2RAD, (float)screenWidth/(float)screenHeight, 0.1f, 100.0f);        Matrix matViewProjection = MatrixMultiply(matView, matProjection);
         Matrix mvp = MatrixMultiply(matModel, matViewProjection);
-        SetShaderValueMatrix(shader, mvpLoc, mvp);        // Draw
+        SetShaderValueMatrix(shader, mvpLoc, mvp);
+        
+        // Update cloud texture binding explicitly each frame to ensure it's correctly bound
+        SetShaderValueTexture(shader, cloudMapLoc, cloudTexture);
+        
+        // Draw
         BeginDrawing();
         
             ClearBackground(BLACK);            
@@ -98,6 +111,7 @@ int main()
     UnloadTexture(nightTexture);
     UnloadTexture(specularTexture);
     UnloadTexture(normalTexture);
+    UnloadTexture(cloudTexture);
     CloseWindow();     // Close window and OpenGL context
     
     return 0;
