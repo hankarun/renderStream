@@ -70,8 +70,10 @@ void main()
     // Apply a stronger threshold to only show lights in very dark areas
     nightFactor = pow(nightFactor, 2.0); // Less sharp transition
     vec4 emissive = nightColor * nightFactor * 1.0; // Increased intensity
-    
+
+    vec4 cloudAmbient = vec4(0.3, 0.3, 0.3, 1.0) * cloudColor * 0.2;
+
     finalColor = ambient + diffuse + specular + emissive;
-    finalColor = mix(finalColor, vec4(1.0, 1.0, 1.0, 1.0), cloudColor.r * diff);
+    finalColor = mix(finalColor, vec4(1.0, 1.0, 1.0, 1.0), cloudColor.r * diff + cloudAmbient.r);
 
 }
