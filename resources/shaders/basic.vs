@@ -46,5 +46,5 @@ void main()
     fragNormal = worldNormal;
     
     // Calculate final vertex position
-    gl_Position = mvp * vec4(vertexPosition, 1.0);
+    gl_Position = mvp * vec4(worldPosition.xyz, 1.0);
 }

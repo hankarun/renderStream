@@ -106,7 +106,7 @@ int main()
             BeginMode3D(camera);
                 // Use the shader with our calculated matrices
                 // Draw the model at origin since our matrices already include the position
-                DrawModelEx(sphere, Vector3Zero(), rotationAxis, rotationAngle, Vector3One(), WHITE);
+                DrawModel(sphere, Vector3Zero(), 1, WHITE);
             EndMode3D();
             
             DrawFPS(10, 50);
