@@ -101,8 +101,6 @@ int main()
         
             ClearBackground(BLACK);            
             BeginMode3D(camera);
-                // Use the shader with our calculated matrices
-                // Draw the model at origin since our matrices already include the position
                 DrawModel(sphere, Vector3Zero(), 1, WHITE);
             EndMode3D();
             
