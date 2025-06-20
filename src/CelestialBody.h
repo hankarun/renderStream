@@ -9,6 +9,7 @@
 class CelestialBody {
 public:
     // Constructor/Destructor
+    CelestialBody();
     CelestialBody(const std::string& name, float radius, float rotationSpeed);
     ~CelestialBody();
 

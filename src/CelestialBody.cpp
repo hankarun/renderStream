@@ -1,5 +1,28 @@
 #include "CelestialBody.h"
 
+CelestialBody::CelestialBody()
+    : name("Unnamed"), 
+      radius(1.0f), 
+      rotationSpeed(0.0f),
+      rotationAngle(0.0f),
+      scale(1.0f),
+      position({0.0f, 0.0f, 0.0f}),
+      rotationAxis({0.0f, 1.0f, 0.0f}), // Default rotation around Y axis
+      orbitParent(nullptr),
+      orbitDistance(0.0f),
+      orbitSpeed(0.0f),
+      orbitAngle(0.0f),
+      orbitTilt(0.0f),
+      hasCustomShader(false)
+{
+    // Initialize all textures to empty
+    diffuseTexture = { 0 };
+    normalTexture = { 0 };
+    specularTexture = { 0 };
+    emissionTexture = { 0 };
+    cloudTexture = { 0 };
+}
+
 CelestialBody::CelestialBody(const std::string& name, float radius, float rotationSpeed)
     : name(name), 
       radius(radius), 
@@ -28,7 +51,10 @@ CelestialBody::~CelestialBody() {
     UnloadTextures();
     
     // Unload model and shader if we have a custom one
-    UnloadModel(model);
+    if (model.meshCount > 0) {
+        UnloadModel(model);
+    }
+
     if (hasCustomShader) {
         UnloadShader(shader);
     }

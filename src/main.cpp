@@ -110,6 +110,8 @@ int main()
         EndDrawing();
     }
     
+    earth = CelestialBody(); // Clean up Earth celestial body
+    moon = CelestialBody();   // Clean up Moon celestial body
     // No need to manually unload textures and models, the CelestialBody destructor will handle it
     CloseWindow();     // Close window and OpenGL context
     
