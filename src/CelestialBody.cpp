@@ -8,11 +8,7 @@ CelestialBody::CelestialBody()
       scale(1.0f),
       position({0.0f, 0.0f, 0.0f}),
       rotationAxis({0.0f, 1.0f, 0.0f}), // Default rotation around Y axis
-      orbitParent(nullptr),
-      orbitDistance(0.0f),
-      orbitSpeed(0.0f),
-      orbitAngle(0.0f),
-      orbitTilt(0.0f),
+      isPaused(false),
       hasCustomShader(false)
 {
     // Initialize all textures to empty
@@ -31,11 +27,7 @@ CelestialBody::CelestialBody(const std::string& name, float radius, float rotati
       scale(1.0f),
       position({0.0f, 0.0f, 0.0f}),
       rotationAxis({0.0f, 1.0f, 0.0f}), // Default rotation around Y axis
-      orbitParent(nullptr),
-      orbitDistance(0.0f),
-      orbitSpeed(0.0f),
-      orbitAngle(0.0f),
-      orbitTilt(0.0f),
+      isPaused(false),
       hasCustomShader(false)
 {
     // Initialize all textures to empty
@@ -182,36 +174,25 @@ void CelestialBody::SetupShaderLocations() {
 }
 
 void CelestialBody::Update(float deltaTime) {
+    // Skip updates if paused
+    if (isPaused) return;
+    
     // Update rotation
     rotationAngle += rotationSpeed * deltaTime;
     if (rotationAngle > 360.0f) rotationAngle -= 360.0f;
     
     // Update orbit if we have a parent
-    if (orbitParent != nullptr) {
+    if (orbitSystem.HasParent()) {
         UpdateOrbit(deltaTime);
     }
 }
 
 void CelestialBody::UpdateOrbit(float deltaTime) {
-    if (orbitParent == nullptr) return;
+    // Use the orbit system to update the orbital position
+    orbitSystem.UpdateOrbit(deltaTime);
     
-    // Update orbit angle
-    orbitAngle += orbitSpeed * deltaTime;
-    if (orbitAngle > 360.0f) orbitAngle -= 360.0f;
-    
-    // Calculate new position based on orbit
-    float x = orbitParent->GetPosition().x + orbitDistance * cosf(orbitAngle * DEG2RAD);
-    float z = orbitParent->GetPosition().z + orbitDistance * sinf(orbitAngle * DEG2RAD);
-    
-    // Apply orbit tilt if needed
-    if (orbitTilt != 0.0f) {
-        // This is a simplified tilt calculation
-        float tiltRadians = orbitTilt * DEG2RAD;
-        float y = orbitParent->GetPosition().y + orbitDistance * sinf(orbitAngle * DEG2RAD) * sinf(tiltRadians);
-        position = Vector3{ x, y, z };
-    } else {
-        position = Vector3{ x, orbitParent->GetPosition().y, z };
-    }
+    // Update the celestial body position based on orbit calculation
+    position = orbitSystem.GetOrbitalPosition();
 }
 
 void CelestialBody::Draw(const Camera3D& camera) {
@@ -284,11 +265,8 @@ void CelestialBody::SetScale(float newScale) {
 }
 
 void CelestialBody::SetOrbit(CelestialBody* parent, float distance, float speed, float tilt) {
-    orbitParent = parent;
-    orbitDistance = distance;
-    orbitSpeed = speed;
-    orbitTilt = tilt;
-    orbitAngle = 0.0f; // Reset orbit angle
+    // Delegate to the orbit system
+    orbitSystem.SetOrbit(parent, distance, speed, tilt);
 }
 
 void CelestialBody::UnloadTextures() {
@@ -297,4 +275,17 @@ void CelestialBody::UnloadTextures() {
     if (specularTexture.id > 0) UnloadTexture(specularTexture);
     if (emissionTexture.id > 0) UnloadTexture(emissionTexture);
     if (cloudTexture.id > 0) UnloadTexture(cloudTexture);
+}
+
+OrbitSystem& CelestialBody::GetOrbitSystem() {
+    return orbitSystem;
+}
+
+void CelestialBody::SetPaused(bool paused) {
+    isPaused = paused;
+    orbitSystem.SetPaused(paused);
+}
+
+bool CelestialBody::IsPaused() const {
+    return isPaused;
 }

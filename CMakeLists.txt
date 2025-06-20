@@ -33,6 +33,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/CelestialBody.cpp
     src/CelestialBody.h
+    src/OrbitSystem.cpp
+    src/OrbitSystem.h
     ${SHADER_FILES}
 )
 

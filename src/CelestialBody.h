@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "OrbitSystem.h"
 #include <string>
 #include <memory>
 
@@ -19,10 +20,12 @@ public:
                   const char* normalMapPath = nullptr,
                   const char* specularMapPath = nullptr,
                   const char* emissionMapPath = nullptr,
-                  const char* cloudMapPath = nullptr);
-
-    // Update the celestial body (rotation, position, etc.)
+                  const char* cloudMapPath = nullptr);    // Update the celestial body (rotation, position, etc.)
     void Update(float deltaTime);
+
+    // Pause/Resume simulation
+    void SetPaused(bool paused);
+    bool IsPaused() const;
 
     // Draw the celestial body
     void Draw(const Camera3D& camera);
@@ -31,11 +34,12 @@ public:
     void SetPosition(const Vector3& position);
     Vector3 GetPosition() const;
     void SetRotationAxis(const Vector3& axis);
-    void SetScale(float scale);
-
-    // Orbit related methods
+    void SetScale(float scale);    // Orbit related methods
     void SetOrbit(CelestialBody* parent, float orbitDistance, float orbitSpeed, float orbitTilt);
     void UpdateOrbit(float deltaTime);
+    
+    // Get the orbital system
+    OrbitSystem& GetOrbitSystem();
 
     // Shader related methods
     void SetCustomShader(Shader shader);
@@ -47,16 +51,12 @@ private:
     float rotationSpeed;
     float rotationAngle;
     float scale;
-    
     Vector3 position;
     Vector3 rotationAxis;
+    bool isPaused;
     
-    // Orbit properties
-    CelestialBody* orbitParent;
-    float orbitDistance;
-    float orbitSpeed;
-    float orbitAngle;
-    float orbitTilt;
+    // Orbit system
+    OrbitSystem orbitSystem;
     
     // 3D model and textures
     Model model;

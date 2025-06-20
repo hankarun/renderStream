@@ -24,6 +24,12 @@ int main()
     // Define the light position (in world space)
     Vector3 lightPos = { 5.0f, 3.0f, 0.0f };
     
+    // Simulation pause state
+    bool simulationPaused = false;
+    
+    // Create pause button
+    Rectangle pauseButton = { screenWidth - 110.0f, 10.0f, 100.0f, 30.0f };
+    
     // Create Earth celestial body
     CelestialBody earth("Earth", 1.0f, 10.0f); // Name, radius, rotation speed
     earth.Initialize(
@@ -75,12 +81,31 @@ int main()
     skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = GenTextureCubemap(shdrCubemap, panorama, 1024, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
     UnloadTexture(panorama);        // Texture not required anymore, cubemap already generated
-
-
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {        
         UpdateCamera(&camera, CAMERA_FREE); // Update camera based on user input
+        
+        // Check for pause button click
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            Vector2 mousePos = GetMousePosition();
+            if (CheckCollisionPointRec(mousePos, pauseButton))
+            {
+                simulationPaused = !simulationPaused;
+                earth.SetPaused(simulationPaused);
+                moon.SetPaused(simulationPaused);
+            }
+        }
+        
+        // Check for space key to toggle pause
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            simulationPaused = !simulationPaused;
+            earth.SetPaused(simulationPaused);
+            moon.SetPaused(simulationPaused);
+        }
+        
         // Update celestial bodies
         float deltaTime = GetFrameTime();
         earth.Update(deltaTime);
@@ -102,10 +127,21 @@ int main()
                 rlEnableDepthMask();
 
                 earth.Draw(camera);
-                moon.Draw(camera);
-            EndMode3D();
+                moon.Draw(camera);            EndMode3D();
             
             DrawFPS(10, 50);
+            
+            // Draw pause button
+            DrawRectangleRec(pauseButton, simulationPaused ? RED : GRAY);
+            DrawRectangleLines(pauseButton.x, pauseButton.y, pauseButton.width, pauseButton.height, BLACK);
+            DrawText(simulationPaused ? "RESUME" : "PAUSE", pauseButton.x + 10, pauseButton.y + 8, 20, BLACK);
+            
+            // Display pause status and instructions
+            if (simulationPaused)
+            {
+                DrawText("SIMULATION PAUSED", screenWidth/2 - MeasureText("SIMULATION PAUSED", 30)/2, 10, 30, RED);
+            }
+            DrawText("Press SPACE to toggle pause", 10, screenHeight - 30, 20, WHITE);
         
         EndDrawing();
     }
