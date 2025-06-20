@@ -57,15 +57,18 @@ int main()
                                             TextFormat("resources/shaders/skybox.fs"));
 
     bool useHDR = false; // Use HDR for skybox rendering
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), (int[1]) { useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
-    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), (int[1]){ useHDR ? 1 : 0 }, SHADER_UNIFORM_INT);
+    int MATERIAL_MAP_CUBEMAPL = MATERIAL_MAP_CUBEMAP;
+    int useHDRValue = useHDR ? 1 : 0;
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "environmentMap"), &MATERIAL_MAP_CUBEMAPL, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "doGamma"), &useHDRValue, SHADER_UNIFORM_INT);
+    SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, "vflipped"), &useHDRValue, SHADER_UNIFORM_INT);
 
        // Load cubemap shader and setup required shader locations
     Shader shdrCubemap = LoadShader(TextFormat("resources/shaders/cubemap.vs"),
                                     TextFormat("resources/shaders/cubemap.fs"));
 
-    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
+    int none = 0;
+    SetShaderValue(shdrCubemap, GetShaderLocation(shdrCubemap, "equirectangularMap"), &none, SHADER_UNIFORM_INT);
 
     const char* skyboxFileName = "resources/images/starmap_2020_4k.hdr"; // Path to the panorama image
     Texture2D panorama = LoadTexture(skyboxFileName);
@@ -94,7 +97,7 @@ int main()
             BeginMode3D(camera);
                 rlDisableBackfaceCulling();
                 rlDisableDepthMask();
-                    DrawModel(skybox, (Vector3){0, 0, 0}, 1.0f, BLACK);
+                    DrawModel(skybox, Vector3{0, 0, 0}, 1.0f, BLACK);
                 rlEnableBackfaceCulling();
                 rlEnableDepthMask();
 
@@ -144,12 +147,12 @@ static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int s
 
     // Define view matrix for every side of the cubemap
     Matrix fboViews[6] = {
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){ -1.0f,  0.0f,  0.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f,  1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f, -1.0f,  0.0f }, (Vector3){ 0.0f,  0.0f, -1.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f,  1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f }),
-        MatrixLookAt((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector3){  0.0f,  0.0f, -1.0f }, (Vector3){ 0.0f, -1.0f,  0.0f })
+        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  1.0f,  0.0f,  0.0f }, Vector3{ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ -1.0f,  0.0f,  0.0f }, Vector3{ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f,  1.0f,  0.0f }, Vector3{ 0.0f,  0.0f,  1.0f }),
+        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f, -1.0f,  0.0f }, Vector3{ 0.0f,  0.0f, -1.0f }),
+        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f,  0.0f,  1.0f }, Vector3{ 0.0f, -1.0f,  0.0f }),
+        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f,  0.0f, -1.0f }, Vector3{ 0.0f, -1.0f,  0.0f })
     };
 
     rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions

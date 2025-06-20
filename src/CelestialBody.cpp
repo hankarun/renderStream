@@ -182,9 +182,9 @@ void CelestialBody::UpdateOrbit(float deltaTime) {
         // This is a simplified tilt calculation
         float tiltRadians = orbitTilt * DEG2RAD;
         float y = orbitParent->GetPosition().y + orbitDistance * sinf(orbitAngle * DEG2RAD) * sinf(tiltRadians);
-        position = (Vector3){ x, y, z };
+        position = Vector3{ x, y, z };
     } else {
-        position = (Vector3){ x, orbitParent->GetPosition().y, z };
+        position = Vector3{ x, orbitParent->GetPosition().y, z };
     }
 }
 
