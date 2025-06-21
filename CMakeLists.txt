@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.14)
 project(RaylibTest)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find required packages
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+    libavcodec
+    libavformat
+    libavutil
+    libswscale
+)
 
 # Use FetchContent to download and build raylib
 include(FetchContent)
@@ -22,6 +31,8 @@ set(SUPPORT_FILEFORMAT_HDR ON CACHE BOOL "Enable HDR support" FORCE)
 # Make the raylib library available
 FetchContent_MakeAvailable(raylib)
 
+# Add the stream library subdirectory
+add_subdirectory(src/stream)
 
 set(SHADER_FILES
     resources/shaders/basic.fs
@@ -34,14 +45,13 @@ add_executable(${PROJECT_NAME}
     src/CelestialBody.cpp
     src/CelestialBody.h
     src/OrbitSystem.cpp
-    src/OrbitSystem.h
     ${SHADER_FILES}
 )
 
 set_source_files_properties(${SHADER_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 # Link with raylib
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib stream)
 
 # Copy resources to build directory
 add_custom_command(
@@ -49,6 +59,14 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
     COMMENT "Copying resources to build directory"
+)
+
+# Create videos directory in build directory
+add_custom_command(
+    TARGET ${PROJECT_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources/videos
+    COMMENT "Creating videos directory in build folder"
 )
 
 # Windows-specific settings
