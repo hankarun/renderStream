@@ -93,7 +93,7 @@ int main()
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {        
-        UpdateCamera(&camera, CAMERA_FREE); // Update camera based on user input
+        UpdateCamera(&camera, CAMERA_ORBITAL); // Update camera based on user input
         
         // Check for pause button click
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -115,9 +115,9 @@ int main()
                     // Start recording
                     screenData = (unsigned char*)RL_MALLOC(screenWidth * screenHeight * 3 * sizeof(unsigned char));
                     
-                    // Initialize video stream
-                    std::string outputFile = "resources/videos/recording.mp4";
-                    videoStream.initialize(outputFile, screenWidth, screenHeight, 30);
+                    // Initialize video stream as RTSP
+                    std::string rtspUrl = "rtsp://127.0.0.1:8554/live";
+                    videoStream.initialize(rtspUrl, screenWidth, screenHeight, 30);
                 }
                 else
                 {

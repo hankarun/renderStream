@@ -5,6 +5,8 @@ Stream::Stream()
     : formatContext(nullptr), codecContext(nullptr), stream(nullptr), 
       frame(nullptr), packet(nullptr), swsContext(nullptr),
       frameCount(0), width(0), height(0), isInitialized(false) {
+    // Initialize FFmpeg's network capabilities at constructor
+    avformat_network_init();
 }
 
 Stream::~Stream() {
@@ -16,18 +18,36 @@ bool Stream::initialize(const std::string& outputFile, int width, int height, in
     this->height = height;
     this->frameCount = 0;
     
-    // Initialize FFmpeg components
-    // This is a simplified implementation; in a real application, you would add error checking
-    // and more configuration options
+    // Make sure network is initialized for streaming
+    static int networkInitialized = 0;
+    if (!networkInitialized) {
+        int ret = avformat_network_init();
+        if (ret < 0) {
+            std::cerr << "Failed to initialize FFmpeg network components" << std::endl;
+            return false;
+        }
+        networkInitialized = 1;
+    }
     
-    // Initialize format context for output file
-    avformat_alloc_output_context2(&formatContext, NULL, NULL, outputFile.c_str());
+    // Determine if we're streaming via RTSP or writing to a file
+    bool isRtspStream = outputFile.compare(0, 7, "rtsp://") == 0;
+    
+    // Initialize format context for output
+    int ret = 0;
+    if (isRtspStream) {
+        // For RTSP, we need to explicitly use the RTSP output format
+        ret = avformat_alloc_output_context2(&formatContext, NULL, "rtsp", outputFile.c_str());
+    } else {
+        // For files, let FFmpeg auto-detect the format based on the file extension
+        ret = avformat_alloc_output_context2(&formatContext, NULL, NULL, outputFile.c_str());
+    }
+    
     if (!formatContext) {
-        std::cerr << "Could not create output context" << std::endl;
+        std::cerr << "Could not create output context (error code: " << ret << ")" << std::endl;
         return false;
     }
     
-    // Find the encoder
+    // Find the encoder - use H264 for compatibility
     const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (!codec) {
         std::cerr << "Could not find encoder" << std::endl;
@@ -56,6 +76,19 @@ bool Stream::initialize(const std::string& outputFile, int width, int height, in
     codecContext->time_base = AVRational{1, fps};
     codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
     codecContext->bit_rate = 2000000; // 2 Mbps
+    
+    // RTSP streaming specific settings
+    if (isRtspStream) {
+        // Lower latency settings for streaming
+        codecContext->gop_size = 12; // Keyframe every 12 frames
+        codecContext->max_b_frames = 0; // No B-frames for lower latency
+        codecContext->rc_buffer_size = codecContext->bit_rate; // Buffer size
+        codecContext->rc_max_rate = codecContext->bit_rate;
+        codecContext->rc_min_rate = codecContext->bit_rate;
+        
+        // Set RTSP transport protocol options
+        av_dict_set(&formatContext->metadata, "rtsp_transport", "tcp", 0); // Use TCP for more reliable streaming
+    }
     
     // Some formats require specific parameters
     if (formatContext->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -106,16 +139,49 @@ bool Stream::initialize(const std::string& outputFile, int width, int height, in
         return false;
     }
     
-    // Open output file
-    if (avio_open(&formatContext->pb, outputFile.c_str(), AVIO_FLAG_WRITE) < 0) {
-        std::cerr << "Could not open output file" << std::endl;
+    // Open output - different for file vs. network streaming
+    AVDictionary* options = NULL;
+    if (isRtspStream) {
+        // For RTSP streaming
+        av_dict_set(&options, "rtsp_transport", "tcp", 0); // Use TCP (more reliable than UDP)
+        av_dict_set(&options, "muxdelay", "0", 0); // Minimize delay
+        
+        // Additional RTSP settings that might help
+        av_dict_set(&options, "fflags", "nobuffer", 0); // Reduce latency
+        av_dict_set(&options, "max_delay", "500000", 0); // 0.5 second max delay
+        av_dict_set(&options, "tune", "zerolatency", 0); // Tune for low latency
+    }
+    
+    // Open the output
+    int avio_ret = 0;
+    if (isRtspStream) {
+        // Make sure we're set to RTSP output format
+        formatContext->oformat = av_guess_format("rtsp", NULL, NULL);
+        if (!formatContext->oformat) {
+            std::cerr << "Could not find RTSP output format" << std::endl;
+            return false;
+        }
+    }
+    
+    avio_ret = avio_open2(&formatContext->pb, outputFile.c_str(), AVIO_FLAG_WRITE, NULL, &options);
+    if (avio_ret < 0) {
+        char errbuf[256];
+        av_strerror(avio_ret, errbuf, sizeof(errbuf));
+        std::cerr << "Could not open output: " << outputFile << " (" << errbuf << ")" << std::endl;
         return false;
     }
     
     // Write header
-    if (avformat_write_header(formatContext, NULL) < 0) {
-        std::cerr << "Could not write header" << std::endl;
+    int header_ret = avformat_write_header(formatContext, &options);
+    if (header_ret < 0) {
+        char errbuf[256];
+        av_strerror(header_ret, errbuf, sizeof(errbuf));
+        std::cerr << "Could not write header: " << errbuf << std::endl;
         return false;
+    }
+    
+    if (options) {
+        av_dict_free(&options);
     }
     
     isInitialized = true;
@@ -179,17 +245,19 @@ bool Stream::addFrame(const unsigned char* data) {
 void Stream::finalize() {
     if (isInitialized) {
         // Flush encoder
-        avcodec_send_frame(codecContext, NULL);
-        while (avcodec_receive_packet(codecContext, packet) >= 0) {
-            av_packet_rescale_ts(packet, codecContext->time_base, stream->time_base);
-            packet->stream_index = stream->index;
-            av_interleaved_write_frame(formatContext, packet);
+        int ret = avcodec_send_frame(codecContext, NULL);
+        if (ret >= 0) {
+            while (avcodec_receive_packet(codecContext, packet) >= 0) {
+                av_packet_rescale_ts(packet, codecContext->time_base, stream->time_base);
+                packet->stream_index = stream->index;
+                av_interleaved_write_frame(formatContext, packet);
+            }
         }
         
         // Write trailer
         av_write_trailer(formatContext);
         
-        // Close output file
+        // Close output file or stream
         if (formatContext && !(formatContext->oformat->flags & AVFMT_NOFILE)) {
             avio_closep(&formatContext->pb);
         }

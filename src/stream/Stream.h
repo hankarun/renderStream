@@ -15,6 +15,16 @@ public:
     Stream();
     ~Stream();
     
+    
+    /**
+     * Initialize the stream with the given output destination, dimensions and frame rate
+     * 
+     * @param outputFile Path to output file or RTSP URL (e.g., "rtsp://localhost:8554/live")
+     * @param width Width of the video stream
+     * @param height Height of the video stream
+     * @param fps Frames per second
+     * @return true if initialization succeeded, false otherwise
+     */
     bool initialize(const std::string& outputFile, int width, int height, int fps);
     bool addFrame(const unsigned char* data);
     void finalize();
