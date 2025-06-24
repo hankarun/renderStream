@@ -3,6 +3,9 @@
 #include "raymath.h"
 #include "CelestialBody.h"
 #include "Tools.h"
+// Add ImGui headers
+#include "imgui.h"
+#include "rlImGui.h"
 
 int main() 
 {
@@ -13,6 +16,9 @@ int main()
     // Enable window resizing before initialization
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "Celestial Bodies Renderer");
+    
+    // Initialize ImGui
+    rlImGuiSetup(true);
     
     // Variables to track current window size
     int currentWidth = screenWidth;
@@ -107,8 +113,10 @@ int main()
         
         // Update celestial bodies
         float deltaTime = GetFrameTime();
-        earth.Update(deltaTime);
-        moon.Update(deltaTime);
+        if (!simulationPaused) {
+            earth.Update(deltaTime);
+            moon.Update(deltaTime);
+        }
         
         // Update shader values with current camera and light positions
         earth.UpdateShaderValues(camera, lightPos);
@@ -126,12 +134,67 @@ int main()
                 rlEnableDepthMask();
 
                 earth.Draw(camera);
-                moon.Draw(camera);            EndMode3D();
+                moon.Draw(camera);            
+            EndMode3D();
+            
+            // Begin ImGui frame
+            rlImGuiBegin();
+            
+            // Create ImGui windows and controls
+            if (ImGui::Begin("Simulation Controls"))
+            {
+                ImGui::Checkbox("Pause Simulation", &simulationPaused);
+                
+                ImGui::Separator();
+                
+                if (ImGui::TreeNode("Earth Properties"))
+                {
+                    float earthRotationSpeed = earth.GetRotationSpeed();
+                    if (ImGui::SliderFloat("Rotation Speed", &earthRotationSpeed, 0.0f, 20.0f))
+                    {
+                        earth.SetRotationSpeed(earthRotationSpeed);
+                    }
+                    
+                    ImGui::TreePop();
+                }
+                
+                if (ImGui::TreeNode("Moon Properties"))
+                {
+                    float moonRotationSpeed = moon.GetRotationSpeed();
+                    if (ImGui::SliderFloat("Rotation Speed", &moonRotationSpeed, 0.0f, 20.0f))
+                    {
+                        moon.SetRotationSpeed(moonRotationSpeed);
+                    }
+                    
+                    float moonOrbitSpeed = moon.GetOrbitSpeed();
+                    if (ImGui::SliderFloat("Orbit Speed", &moonOrbitSpeed, 0.0f, 10.0f))
+                    {
+                        moon.SetOrbitSpeed(moonOrbitSpeed);
+                    }
+                    
+                    ImGui::TreePop();
+                }
+                
+                ImGui::Separator();
+                
+                if (ImGui::Button("Reset Camera"))
+                {
+                    camera.position = Vector3{ -5.0f, 1.0f, -8.0f };
+                    camera.target = Vector3{ 0.0f, 0.0f, 0.0f };
+                }
+            }
+            ImGui::End();
+            
+            // End ImGui frame
+            rlImGuiEnd();
             
             DrawFPS(5, 5);
             
         EndDrawing();
     }
+    
+    // Shutdown ImGui before closing
+    rlImGuiShutdown();
     
     earth = CelestialBody(); // Clean up Earth celestial body
     moon = CelestialBody();   // Clean up Moon celestial body

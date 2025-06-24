@@ -62,6 +62,10 @@ float OrbitSystem::GetOrbitSpeed() const {
     return orbitSpeed;
 }
 
+void OrbitSystem::SetOrbitSpeed(float speed) {
+    orbitSpeed = speed;
+}
+
 float OrbitSystem::GetOrbitAngle() const {
     return orbitAngle;
 }

@@ -289,3 +289,19 @@ void CelestialBody::SetPaused(bool paused) {
 bool CelestialBody::IsPaused() const {
     return isPaused;
 }
+
+float CelestialBody::GetRotationSpeed() const {
+    return rotationSpeed;
+}
+
+void CelestialBody::SetRotationSpeed(float speed) {
+    rotationSpeed = speed;
+}
+
+float CelestialBody::GetOrbitSpeed() const {
+    return orbitSystem.GetOrbitSpeed();
+}
+
+void CelestialBody::SetOrbitSpeed(float speed) {
+    orbitSystem.SetOrbitSpeed(speed);
+}

@@ -41,6 +41,12 @@ public:
     // Get the orbital system
     OrbitSystem& GetOrbitSystem();
 
+    // Rotation and orbit speed getters/setters
+    float GetRotationSpeed() const;
+    void SetRotationSpeed(float speed);
+    float GetOrbitSpeed() const;
+    void SetOrbitSpeed(float speed);
+
     // Shader related methods
     void SetCustomShader(Shader shader);
     void UpdateShaderValues(const Camera3D& camera, const Vector3& lightPos);

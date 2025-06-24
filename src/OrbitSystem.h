@@ -27,6 +27,7 @@ public:
     // Getters for orbit properties
     float GetOrbitDistance() const;
     float GetOrbitSpeed() const;
+    void SetOrbitSpeed(float speed);
     float GetOrbitAngle() const;
     float GetOrbitTilt() const;
     CelestialBody* GetOrbitParent() const;
