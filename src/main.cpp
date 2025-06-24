@@ -13,9 +13,16 @@ int main()
     const int screenWidth = 800;
     const int screenHeight = 600;
     
+    // Initial render texture dimensions (will be adjusted based on ImGui window size)
+    int renderTextureWidth = 512;
+    int renderTextureHeight = 384;
+        
     // Enable window resizing before initialization
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "Celestial Bodies Renderer");
+    
+    // Create render texture for the camera view
+    RenderTexture2D cameraRenderTexture = LoadRenderTexture(renderTextureWidth, renderTextureHeight);
     
     // Initialize ImGui
     rlImGuiSetup(true);
@@ -107,6 +114,9 @@ int main()
             
             // Update UI element positions based on new window size
             pauseButton.x = currentWidth - 110.0f;
+            
+            // Note: We don't need to update the render texture size here
+            // It will be updated when ImGui window size changes
         }
         
         UpdateCamera(&camera, CAMERA_ORBITAL); // Update camera based on user input
@@ -125,20 +135,56 @@ int main()
         // Draw
         BeginDrawing();
         
-            ClearBackground(BLACK);            
-            BeginMode3D(camera);
-                rlDisableBackfaceCulling();
-                rlDisableDepthMask();
-                    DrawModel(skybox, Vector3{0, 0, 0}, 1.0f, BLACK);
-                rlEnableBackfaceCulling();
-                rlEnableDepthMask();
+            ClearBackground(GRAY);
+            
+            // Only render the 3D scene to the render texture
+            BeginTextureMode(cameraRenderTexture);
+                ClearBackground(BLACK);
+                BeginMode3D(camera);
+                    rlDisableBackfaceCulling();
+                    rlDisableDepthMask();
+                        DrawModel(skybox, Vector3{0, 0, 0}, 1.0f, BLACK);
+                    rlEnableBackfaceCulling();
+                    rlEnableDepthMask();
 
-                earth.Draw(camera);
-                moon.Draw(camera);            
-            EndMode3D();
+                    earth.Draw(camera);
+                    moon.Draw(camera);            
+                EndMode3D();
+            EndTextureMode();
             
             // Begin ImGui frame
             rlImGuiBegin();
+            
+            // Create ImGui window for the camera render texture
+            if (ImGui::Begin("Camera View"))
+            {
+                // Get the ImGui window content region dimensions
+                ImVec2 contentSize = ImGui::GetContentRegionAvail();
+                
+                // Check if window size has changed significantly (more than 10 pixels in either dimension)
+                // to avoid recreating the texture too frequently
+                if (abs((int)contentSize.x - renderTextureWidth) > 10 || abs((int)contentSize.y - renderTextureHeight) > 10)
+                {
+                    // Update render texture dimensions
+                    renderTextureWidth = (int)contentSize.x;
+                    renderTextureHeight = (int)contentSize.y;
+                    
+                    // Make sure dimensions are at least 64x64
+                    renderTextureWidth = (renderTextureWidth < 64) ? 64 : renderTextureWidth;
+                    renderTextureHeight = (renderTextureHeight < 64) ? 64 : renderTextureHeight;
+                    
+                    // Unload existing texture and create a new one with the updated size
+                    UnloadRenderTexture(cameraRenderTexture);
+                    cameraRenderTexture = LoadRenderTexture(renderTextureWidth, renderTextureHeight);
+                }
+                
+                // Display the render texture filling the entire content area
+                ImGui::Image((ImTextureID)(intptr_t)cameraRenderTexture.texture.id, 
+                            ImVec2(contentSize.x, contentSize.y), 
+                            ImVec2(0, 1),  // UV0: flip vertically
+                            ImVec2(1, 0)); // UV1: flip vertically
+            }
+            ImGui::End();
             
             // Create ImGui windows and controls
             if (ImGui::Begin("Simulation Controls"))
@@ -195,6 +241,9 @@ int main()
     
     // Shutdown ImGui before closing
     rlImGuiShutdown();
+    
+    // Unload the render texture
+    UnloadRenderTexture(cameraRenderTexture);
     
     earth = CelestialBody(); // Clean up Earth celestial body
     moon = CelestialBody();   // Clean up Moon celestial body
