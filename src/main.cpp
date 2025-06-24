@@ -2,7 +2,6 @@
 #include "rlgl.h"
 #include "raymath.h"
 #include "CelestialBody.h"
-#include "stream/Stream.h" // Include the new Stream header
 
 static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format);
 
@@ -30,14 +29,9 @@ int main()
     
     // Video recording state
     bool isRecording = false;
-    Stream videoStream;
-    unsigned char* screenData = nullptr;
-    
+
     // Create pause button
     Rectangle pauseButton = { screenWidth - 110.0f, 10.0f, 100.0f, 30.0f };
-    
-    // Create record button
-    Rectangle recordButton = { screenWidth - 110.0f, 50.0f, 100.0f, 30.0f };
     
     // Create Earth celestial body
     CelestialBody earth("Earth", 1.0f, 10.0f); // Name, radius, rotation speed
@@ -105,32 +99,6 @@ int main()
                 earth.SetPaused(simulationPaused);
                 moon.SetPaused(simulationPaused);
             }
-            // Check for record button click
-            else if (CheckCollisionPointRec(mousePos, recordButton))
-            {
-                isRecording = !isRecording;
-                
-                if (isRecording)
-                {
-                    // Start recording
-                    screenData = (unsigned char*)RL_MALLOC(screenWidth * screenHeight * 3 * sizeof(unsigned char));
-                    
-                    // Initialize video stream as RTSP
-                    std::string rtspUrl = "rtsp://127.0.0.1:8554/live";
-                    videoStream.initialize(rtspUrl, screenWidth, screenHeight, 30);
-                }
-                else
-                {
-                    // Stop recording
-                    videoStream.finalize();
-                    
-                    if (screenData)
-                    {
-                        RL_FREE(screenData);
-                        screenData = nullptr;
-                    }
-                }
-            }
         }
         
         // Check for space key to toggle pause
@@ -171,38 +139,12 @@ int main()
             DrawRectangleLines(pauseButton.x, pauseButton.y, pauseButton.width, pauseButton.height, BLACK);
             DrawText(simulationPaused ? "RESUME" : "PAUSE", pauseButton.x + 10, pauseButton.y + 8, 20, BLACK);
             
-            // Draw record button
-            DrawRectangleRec(recordButton, isRecording ? GREEN : GRAY);
-            DrawRectangleLines(recordButton.x, recordButton.y, recordButton.width, recordButton.height, BLACK);
-            DrawText(isRecording ? "STOP" : "RECORD", recordButton.x + 10, recordButton.y + 8, 20, BLACK);
-            
             // Display pause status and instructions
             if (simulationPaused)
             {
                 DrawText("SIMULATION PAUSED", screenWidth/2 - MeasureText("SIMULATION PAUSED", 30)/2, 10, 30, RED);
             }
             DrawText("Press SPACE to toggle pause", 10, screenHeight - 30, 20, WHITE);
-        
-        // Record the frame if recording is active
-            if (isRecording && screenData)
-            {
-                // Capture the screen
-                unsigned char* screenPixels = rlReadScreenPixels(screenWidth, screenHeight);
-                
-                // Convert RGBA to RGB (removing alpha channel)
-                for (int i = 0; i < screenWidth * screenHeight; i++)
-                {
-                    screenData[i * 3] = screenPixels[i * 4];         // R
-                    screenData[i * 3 + 1] = screenPixels[i * 4 + 1]; // G
-                    screenData[i * 3 + 2] = screenPixels[i * 4 + 2]; // B
-                }
-                
-                // Add frame to the video stream
-                videoStream.addFrame(screenData);
-                
-                // Free the screen pixels
-                RL_FREE(screenPixels);
-            }
         
         EndDrawing();
     }

@@ -4,15 +4,6 @@ project(RaylibTest)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find required packages
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
-    libavcodec
-    libavformat
-    libavutil
-    libswscale
-)
-
 # Use FetchContent to download and build raylib
 include(FetchContent)
 
@@ -31,9 +22,6 @@ set(SUPPORT_FILEFORMAT_HDR ON CACHE BOOL "Enable HDR support" FORCE)
 # Make the raylib library available
 FetchContent_MakeAvailable(raylib)
 
-# Add the stream library subdirectory
-add_subdirectory(src/stream)
-
 set(SHADER_FILES
     resources/shaders/basic.fs
     resources/shaders/basic.vs
@@ -51,7 +39,7 @@ add_executable(${PROJECT_NAME}
 set_source_files_properties(${SHADER_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 # Link with raylib
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib stream)
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
 # Copy resources to build directory
 add_custom_command(
