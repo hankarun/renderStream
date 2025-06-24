@@ -2,8 +2,7 @@
 #include "rlgl.h"
 #include "raymath.h"
 #include "CelestialBody.h"
-
-static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format);
+#include "Tools.h"
 
 int main() 
 {
@@ -11,7 +10,13 @@ int main()
     const int screenWidth = 800;
     const int screenHeight = 600;
     
+    // Enable window resizing before initialization
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "Celestial Bodies Renderer");
+    
+    // Variables to track current window size
+    int currentWidth = screenWidth;
+    int currentHeight = screenHeight;
     
     // Define the camera
     Camera3D camera = { 0 };
@@ -87,27 +92,18 @@ int main()
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {        
+        // Check if window has been resized
+        if (IsWindowResized())
+        {
+            // Update current window dimensions
+            currentWidth = GetScreenWidth();
+            currentHeight = GetScreenHeight();
+            
+            // Update UI element positions based on new window size
+            pauseButton.x = currentWidth - 110.0f;
+        }
+        
         UpdateCamera(&camera, CAMERA_ORBITAL); // Update camera based on user input
-        
-        // Check for pause button click
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        {
-            Vector2 mousePos = GetMousePosition();
-            if (CheckCollisionPointRec(mousePos, pauseButton))
-            {
-                simulationPaused = !simulationPaused;
-                earth.SetPaused(simulationPaused);
-                moon.SetPaused(simulationPaused);
-            }
-        }
-        
-        // Check for space key to toggle pause
-        if (IsKeyPressed(KEY_SPACE))
-        {
-            simulationPaused = !simulationPaused;
-            earth.SetPaused(simulationPaused);
-            moon.SetPaused(simulationPaused);
-        }
         
         // Update celestial bodies
         float deltaTime = GetFrameTime();
@@ -132,20 +128,8 @@ int main()
                 earth.Draw(camera);
                 moon.Draw(camera);            EndMode3D();
             
-            DrawFPS(10, 50);
+            DrawFPS(5, 5);
             
-            // Draw pause button
-            DrawRectangleRec(pauseButton, simulationPaused ? RED : GRAY);
-            DrawRectangleLines(pauseButton.x, pauseButton.y, pauseButton.width, pauseButton.height, BLACK);
-            DrawText(simulationPaused ? "RESUME" : "PAUSE", pauseButton.x + 10, pauseButton.y + 8, 20, BLACK);
-            
-            // Display pause status and instructions
-            if (simulationPaused)
-            {
-                DrawText("SIMULATION PAUSED", screenWidth/2 - MeasureText("SIMULATION PAUSED", 30)/2, 10, 30, RED);
-            }
-            DrawText("Press SPACE to toggle pause", 10, screenHeight - 30, 20, WHITE);
-        
         EndDrawing();
     }
     
@@ -155,93 +139,4 @@ int main()
     CloseWindow();     // Close window and OpenGL context
     
     return 0;
-}
-
-// Generate cubemap texture from HDR texture
-static TextureCubemap GenTextureCubemap(Shader shader, Texture2D panorama, int size, int format)
-{
-    TextureCubemap cubemap = { 0 };
-
-    rlDisableBackfaceCulling();     // Disable backface culling to render inside the cube
-
-    // STEP 1: Setup framebuffer
-    //------------------------------------------------------------------------------------------
-    unsigned int rbo = rlLoadTextureDepth(size, size, true);
-    cubemap.id = rlLoadTextureCubemap(0, size, format, 1);
-
-    unsigned int fbo = rlLoadFramebuffer();
-    rlFramebufferAttach(fbo, rbo, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
-    rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X, 0);
-
-    // Check if framebuffer is complete with attachments (valid)
-    if (rlFramebufferComplete(fbo)) TraceLog(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", fbo);
-    //------------------------------------------------------------------------------------------
-
-    // STEP 2: Draw to framebuffer
-    //------------------------------------------------------------------------------------------
-    // NOTE: Shader is used to convert HDR equirectangular environment map to cubemap equivalent (6 faces)
-    rlEnableShader(shader.id);
-
-    // Define projection matrix and send it to shader
-    Matrix matFboProjection = MatrixPerspective(90.0*DEG2RAD, 1.0, rlGetCullDistanceNear(), rlGetCullDistanceFar());
-    rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_PROJECTION], matFboProjection);
-
-    // Define view matrix for every side of the cubemap
-    Matrix fboViews[6] = {
-        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  1.0f,  0.0f,  0.0f }, Vector3{ 0.0f, -1.0f,  0.0f }),
-        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ -1.0f,  0.0f,  0.0f }, Vector3{ 0.0f, -1.0f,  0.0f }),
-        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f,  1.0f,  0.0f }, Vector3{ 0.0f,  0.0f,  1.0f }),
-        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f, -1.0f,  0.0f }, Vector3{ 0.0f,  0.0f, -1.0f }),
-        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f,  0.0f,  1.0f }, Vector3{ 0.0f, -1.0f,  0.0f }),
-        MatrixLookAt(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{  0.0f,  0.0f, -1.0f }, Vector3{ 0.0f, -1.0f,  0.0f })
-    };
-
-    rlViewport(0, 0, size, size);   // Set viewport to current fbo dimensions
-    
-    // Activate and enable texture for drawing to cubemap faces
-    rlActiveTextureSlot(0);
-    rlEnableTexture(panorama.id);
-
-    for (int i = 0; i < 6; i++)
-    {
-        // Set the view matrix for the current cube face
-        rlSetUniformMatrix(shader.locs[SHADER_LOC_MATRIX_VIEW], fboViews[i]);
-        
-        // Select the current cubemap face attachment for the fbo
-        // WARNING: This function by default enables->attach->disables fbo!!!
-        rlFramebufferAttach(fbo, cubemap.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_CUBEMAP_POSITIVE_X + i, 0);
-        rlEnableFramebuffer(fbo);
-
-        // Load and draw a cube, it uses the current enabled texture
-        rlClearScreenBuffers();
-        rlLoadDrawCube();
-
-        // ALTERNATIVE: Try to use internal batch system to draw the cube instead of rlLoadDrawCube
-        // for some reason this method does not work, maybe due to cube triangles definition? normals pointing out?
-        // TODO: Investigate this issue...
-        //rlSetTexture(panorama.id); // WARNING: It must be called after enabling current framebuffer if using internal batch system!
-        //rlClearScreenBuffers();
-        //DrawCubeV(Vector3Zero(), Vector3One(), WHITE);
-        //rlDrawRenderBatchActive();
-    }
-    //------------------------------------------------------------------------------------------
-
-    // STEP 3: Unload framebuffer and reset state
-    //------------------------------------------------------------------------------------------
-    rlDisableShader();          // Unbind shader
-    rlDisableTexture();         // Unbind texture
-    rlDisableFramebuffer();     // Unbind framebuffer
-    rlUnloadFramebuffer(fbo);   // Unload framebuffer (and automatically attached depth texture/renderbuffer)
-
-    // Reset viewport dimensions to default
-    rlViewport(0, 0, rlGetFramebufferWidth(), rlGetFramebufferHeight());
-    rlEnableBackfaceCulling();
-    //------------------------------------------------------------------------------------------
-
-    cubemap.width = size;
-    cubemap.height = size;
-    cubemap.mipmaps = 1;
-    cubemap.format = format;
-
-    return cubemap;
 }
